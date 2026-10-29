@@ -15,8 +15,23 @@ import {
   SEED_SLOTS,
 } from "../data/seed";
 
-const KEY = "ai_appt_data_v2";
+const KEY = "ai_appt_data_v3";
 const Ctx = createContext(null);
+
+function normalizeEvent(e) {
+  const visitType =
+    e.visitType || (e.location === "Virtual" ? "virtual" : "in_person");
+  const room =
+    e.room ??
+    (e.location && e.location !== "Virtual" ? e.location : "") ??
+    "";
+  return {
+    ...e,
+    status: e.status || "confirmed",
+    visitType,
+    room: visitType === "virtual" ? "" : room,
+  };
+}
 
 function seedAccounts() {
   return DEMO_USERS.filter((u) => !u.isAdmin).map((u) => ({
@@ -33,7 +48,7 @@ function seedAccounts() {
 function seed() {
   return {
     clients: SEED_CLIENTS.map((c) => ({ ...c })),
-    events: SEED_EVENTS.map((e) => ({ ...e })),
+    events: SEED_EVENTS.map((e) => normalizeEvent({ ...e })),
     slots: SEED_SLOTS.map((s) => ({ ...s })),
     documents: SEED_DOCS.map((d) => ({ ...d })),
     clinics: SEED_CLINICS.map((c) => ({ ...c })),
@@ -51,7 +66,9 @@ function load() {
       ...base,
       ...parsed,
       clients: Array.isArray(parsed.clients) ? parsed.clients : base.clients,
-      events: Array.isArray(parsed.events) ? parsed.events : base.events,
+      events: Array.isArray(parsed.events)
+        ? parsed.events.map((e) => normalizeEvent(e))
+        : base.events,
       slots: Array.isArray(parsed.slots) ? parsed.slots : base.slots,
       documents: Array.isArray(parsed.documents) ? parsed.documents : base.documents,
       clinics: Array.isArray(parsed.clinics) ? parsed.clinics : base.clinics,
@@ -80,7 +97,7 @@ export function StoreProvider({ children }) {
     const fresh = seed();
     setData(fresh);
     localStorage.setItem(KEY, JSON.stringify(fresh));
-    notify("Demo data reset");
+    notify("Demo data reset (local only)");
   }, [notify]);
 
   const addClient = useCallback(
@@ -106,10 +123,38 @@ export function StoreProvider({ children }) {
 
   const addEvent = useCallback(
     (event) => {
-      const row = { id: `e-${Date.now()}`, ...event };
+      const row = normalizeEvent({
+        id: `e-${Date.now()}`,
+        status: "confirmed",
+        ...event,
+      });
       setData((d) => ({ ...d, events: [...d.events, row] }));
       notify("Appointment saved");
       return row;
+    },
+    [notify]
+  );
+
+  const cancelEvent = useCallback(
+    (id) => {
+      setData((d) => ({
+        ...d,
+        events: d.events.map((e) =>
+          e.id === id ? { ...e, status: "cancelled" } : e
+        ),
+      }));
+      notify("Appointment cancelled");
+    },
+    [notify]
+  );
+
+  const setEventStatus = useCallback(
+    (id, status) => {
+      setData((d) => ({
+        ...d,
+        events: d.events.map((e) => (e.id === id ? { ...e, status } : e)),
+      }));
+      notify(`Marked ${status.replace("_", "-")}`);
     },
     [notify]
   );
@@ -121,6 +166,17 @@ export function StoreProvider({ children }) {
         events: d.events.filter((e) => e.id !== id),
       }));
       notify("Appointment removed");
+    },
+    [notify]
+  );
+
+  const restoreClient = useCallback(
+    (id) => {
+      setData((d) => ({
+        ...d,
+        clients: d.clients.map((c) => (c.id === id ? { ...c, active: true } : c)),
+      }));
+      notify("Client restored");
     },
     [notify]
   );
@@ -271,7 +327,10 @@ export function StoreProvider({ children }) {
       resetDemo,
       addClient,
       removeClient,
+      restoreClient,
       addEvent,
+      cancelEvent,
+      setEventStatus,
       removeEvent,
       toggleSlot,
       addDocument,
@@ -289,7 +348,10 @@ export function StoreProvider({ children }) {
       resetDemo,
       addClient,
       removeClient,
+      restoreClient,
       addEvent,
+      cancelEvent,
+      setEventStatus,
       removeEvent,
       toggleSlot,
       addDocument,

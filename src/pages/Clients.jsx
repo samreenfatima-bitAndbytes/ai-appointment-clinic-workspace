@@ -1,14 +1,18 @@
 import { useState } from "react";
+import ConfirmModal from "../components/ConfirmModal";
 import { useStore } from "../hooks/useStore";
 
 export default function Clients() {
-  const { clients, addClient, removeClient } = useStore();
+  const { clients, addClient, removeClient, restoreClient } = useStore();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [archiveId, setArchiveId] = useState(null);
 
   const list = clients.filter((c) => c.active);
+  const archived = clients.filter((c) => !c.active);
+  const pendingArchive = clients.find((c) => c.id === archiveId);
 
   const onSubmit = (e) => {
     e.preventDefault();
@@ -31,7 +35,7 @@ export default function Clients() {
         <div>
           <h2>Clients</h2>
           <p className="muted" style={{ margin: "0.35rem 0 0" }}>
-            Contact book for Harbor Wellness Clinic
+            Contact book for Harbor Wellness Clinic · archive keeps history
           </p>
         </div>
       </div>
@@ -72,9 +76,9 @@ export default function Clients() {
         </div>
       </div>
 
-      <div className="panel">
+      <div className="panel" style={{ marginBottom: "1rem" }}>
         {list.length === 0 ? (
-          <p className="muted">No clients yet.</p>
+          <p className="muted">No active clients.</p>
         ) : (
           <ul className="stack-list">
             {list.map((c) => (
@@ -92,7 +96,7 @@ export default function Clients() {
                 <button
                   type="button"
                   className="btn btn-danger"
-                  onClick={() => removeClient(c.id)}
+                  onClick={() => setArchiveId(c.id)}
                 >
                   Archive
                 </button>
@@ -101,6 +105,52 @@ export default function Clients() {
           </ul>
         )}
       </div>
+
+      {archived.length > 0 ? (
+        <div className="panel">
+          <h3 style={{ marginTop: 0 }}>Archived</h3>
+          <p className="muted" style={{ marginTop: 0 }}>
+            Soft-removed from booking lists — restore anytime.
+          </p>
+          <ul className="stack-list">
+            {archived.map((c) => (
+              <li key={c.id} className="stack-item">
+                <div className="stack-item-body">
+                  <strong>
+                    {c.firstName} {c.lastName}
+                  </strong>
+                  <p>{c.email}</p>
+                </div>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  onClick={() => restoreClient(c.id)}
+                >
+                  Restore
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <ConfirmModal
+        open={Boolean(archiveId)}
+        title="Archive client?"
+        message={
+          pendingArchive
+            ? `${pendingArchive.firstName} ${pendingArchive.lastName} leaves the active list but can be restored anytime.`
+            : "They leave the active list but can be restored anytime."
+        }
+        confirmLabel="Archive"
+        cancelLabel="Keep active"
+        danger
+        onCancel={() => setArchiveId(null)}
+        onConfirm={() => {
+          if (archiveId) removeClient(archiveId);
+          setArchiveId(null);
+        }}
+      />
     </div>
   );
 }

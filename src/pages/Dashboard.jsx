@@ -2,6 +2,19 @@ import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useStore } from "../hooks/useStore";
 
+function isSameDay(a, b) {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function visitLabel(ev) {
+  if (ev.visitType === "virtual") return "Virtual";
+  return ev.room || "In person";
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { clients, events, slots, documents } = useStore();
@@ -9,11 +22,17 @@ export default function Dashboard() {
   if (user?.isAdmin) return <Navigate to="/app/admin" replace />;
 
   const activeClients = clients.filter((c) => c.active);
-  const upcoming = [...events]
-    .filter((e) => new Date(e.start) >= new Date())
+  const now = new Date();
+  const live = events.filter((e) => e.status !== "cancelled");
+  const todayAppts = live.filter((e) => isSameDay(new Date(e.start), now));
+  const upcoming = [...live]
+    .filter((e) => new Date(e.start) >= now && e.status !== "completed")
     .sort((a, b) => new Date(a.start) - new Date(b.start))
     .slice(0, 4);
   const openSlots = slots.filter((s) => s.available).length;
+  const cancelledSoon = events.filter(
+    (e) => e.status === "cancelled" && new Date(e.start) >= now
+  ).length;
 
   return (
     <div>
@@ -21,12 +40,12 @@ export default function Dashboard() {
         <div>
           <h2>Clinic dashboard</h2>
           <p className="muted" style={{ margin: "0.35rem 0 0" }}>
-            {user.businessName} · create appointments, manage clients, train the assistant
+            {user.businessName} · counts use active clients &amp; non-cancelled appointments
           </p>
         </div>
         <div className="row-actions">
-          <Link className="btn btn-ghost" to="/app/clients">
-            Add client
+          <Link className="btn btn-ghost" to="/app/calendar">
+            View calendar
           </Link>
           <Link className="btn btn-primary" to="/app/calendar">
             New appointment
@@ -34,10 +53,14 @@ export default function Dashboard() {
         </div>
       </div>
 
-      <div className="grid-3" style={{ marginBottom: "1.5rem" }}>
+      <div className="grid-4" style={{ marginBottom: "1.5rem" }}>
+        <div className="stat">
+          <strong>{todayAppts.length}</strong>
+          <span>Today</span>
+        </div>
         <div className="stat">
           <strong>{upcoming.length}</strong>
-          <span>Upcoming appointments</span>
+          <span>Upcoming</span>
         </div>
         <div className="stat">
           <strong>{activeClients.length}</strong>
@@ -53,10 +76,10 @@ export default function Dashboard() {
         <div className="panel">
           <div className="panel-head-row">
             <h3 style={{ margin: 0 }}>Next up</h3>
-            <Link to="/app/calendar">Edit schedule</Link>
+            <Link to="/app/calendar">View calendar</Link>
           </div>
           {upcoming.length === 0 ? (
-            <p className="muted">No upcoming appointments. Book one from Calendar.</p>
+            <p className="muted">No upcoming confirmed visits. Book one from Calendar.</p>
           ) : (
             <ul className="stack-list">
               {upcoming.map((e) => (
@@ -71,32 +94,33 @@ export default function Dashboard() {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}{" "}
-                      · {e.location || "—"}
+                      · {visitLabel(e)}
                     </p>
+                    <span className={`chip chip-status-${e.status || "confirmed"}`}>
+                      {(e.status || "confirmed").replace("_", " ")}
+                    </span>
                   </div>
-                  <Link
-                    className="btn btn-ghost"
-                    style={{ padding: "0.35rem 0.65rem", fontSize: "0.8rem" }}
-                    to="/app/calendar"
-                  >
-                    Manage
-                  </Link>
                 </li>
               ))}
             </ul>
           )}
+          {cancelledSoon > 0 ? (
+            <p className="muted" style={{ margin: "0.75rem 0 0", fontSize: "0.88rem" }}>
+              {cancelledSoon} upcoming visit(s) marked cancelled (still on calendar).
+            </p>
+          ) : null}
         </div>
         <div className="panel">
           <h3 style={{ marginTop: 0 }}>Actions</h3>
           <div style={{ display: "grid", gap: "0.5rem" }}>
             <Link className="btn btn-primary" to="/app/calendar">
-              Book / remove appointments
+              Book or cancel appointments
             </Link>
             <Link className="btn btn-ghost" to="/app/calendar">
               Open or close weekly slots
             </Link>
             <Link className="btn btn-ghost" to="/app/clients">
-              Add or archive clients
+              Add or archive clients ({activeClients.length} active)
             </Link>
             <Link className="btn btn-ghost" to="/app/assistant">
               Chat + upload FAQ docs ({documents.length})

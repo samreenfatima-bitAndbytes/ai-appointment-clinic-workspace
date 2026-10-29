@@ -70,7 +70,7 @@ export default function Layout() {
             </small>
           </span>
           <button type="button" className="btn btn-ghost" onClick={resetDemo}>
-            Reset demo
+            Reset demo data
           </button>
           <button type="button" className="btn btn-ghost" onClick={doLogout}>
             Log out
@@ -111,7 +111,7 @@ export default function Layout() {
               setMenuOpen(false);
             }}
           >
-            Reset demo
+            Reset demo data
           </button>
           <button type="button" className="btn btn-primary" onClick={doLogout}>
             Log out

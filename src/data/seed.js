@@ -105,10 +105,16 @@ export const SEED_CLIENTS = [
   },
 ];
 
-function isoDaysFromNow(days, hour, minute = 0) {
+/** Monday=0 … Sunday=6 (matches DAY_NAMES). Skip weekends for clinic hours. */
+function isoNextWeekday(weekdayMon0, hour, minute = 0, weekOffset = 0) {
   const d = new Date();
-  d.setDate(d.getDate() + days);
   d.setHours(hour, minute, 0, 0);
+  const jsDay = d.getDay(); // Sun=0
+  const mon0 = jsDay === 0 ? 6 : jsDay - 1;
+  let add = (weekdayMon0 - mon0 + 7) % 7;
+  if (add === 0 && d <= new Date()) add = 7;
+  add += weekOffset * 7;
+  d.setDate(d.getDate() + add);
   return d.toISOString();
 }
 
@@ -118,35 +124,43 @@ export const SEED_EVENTS = [
     title: "Initial consult — Jordan Lee",
     description: "Intake and goals",
     clientId: "c1",
-    start: isoDaysFromNow(1, 10, 0),
-    end: isoDaysFromNow(1, 10, 45),
-    location: "Room A",
+    start: isoNextWeekday(0, 10, 0),
+    end: isoNextWeekday(0, 10, 45),
+    visitType: "in_person",
+    room: "Room A",
+    status: "confirmed",
   },
   {
     id: "e2",
     title: "Follow-up — Sam Rivera",
     description: "Review plan",
     clientId: "c2",
-    start: isoDaysFromNow(2, 14, 0),
-    end: isoDaysFromNow(2, 14, 30),
-    location: "Virtual",
+    start: isoNextWeekday(2, 14, 0),
+    end: isoNextWeekday(2, 14, 30),
+    visitType: "virtual",
+    room: "",
+    status: "confirmed",
   },
   {
     id: "e3",
     title: "Wellness check — Avery Nguyen",
     description: "",
     clientId: "c3",
-    start: isoDaysFromNow(3, 11, 0),
-    end: isoDaysFromNow(3, 11, 30),
-    location: "Room B",
+    start: isoNextWeekday(3, 11, 0),
+    end: isoNextWeekday(3, 11, 30),
+    visitType: "in_person",
+    room: "Room B",
+    status: "confirmed",
   },
 ];
 
+/** Monday=0 … Friday=4 — matches FAQ Mon–Fri hours */
 export const SEED_SLOTS = [
-  { id: "s1", day: 1, start: "09:00", end: "12:00", available: true },
-  { id: "s2", day: 1, start: "13:00", end: "17:00", available: true },
-  { id: "s3", day: 3, start: "09:00", end: "12:00", available: true },
-  { id: "s4", day: 4, start: "10:00", end: "16:00", available: true },
+  { id: "s1", day: 0, start: "09:00", end: "12:00", available: true },
+  { id: "s2", day: 0, start: "13:00", end: "17:00", available: true },
+  { id: "s3", day: 2, start: "09:00", end: "12:00", available: true },
+  { id: "s4", day: 3, start: "10:00", end: "16:00", available: true },
+  { id: "s5", day: 4, start: "09:00", end: "17:00", available: true },
 ];
 
 export const SEED_DOCS = [
@@ -155,18 +169,20 @@ export const SEED_DOCS = [
     filename: "clinic-faq.txt",
     content: `Harbor Wellness Clinic FAQ
 Q: Hours?
-A: Mon–Fri 9:00–17:00. Closed weekends.
+A: Mon–Fri 9:00–17:00. Closed Saturdays and Sundays — appointments are only booked on weekdays.
 
 Q: How do I book?
 A: Use the assistant or call the front desk — we confirm within one business day.
 
 Q: Cancellation?
-A: Please cancel at least 24 hours ahead to avoid a late fee.
+A: Please cancel at least 24 hours ahead to avoid a late fee. Cancelled visits stay on the calendar as Cancelled.
 
 Q: Virtual visits?
-A: Yes — select Virtual as the location when booking.`,
+A: Yes — choose visit type Virtual when booking (no room needed).`,
   },
 ];
+
+export const APPT_STATUSES = ["confirmed", "pending", "cancelled", "completed", "no_show"];
 
 export const DAY_NAMES = [
   "Monday",
@@ -203,6 +219,8 @@ export function replyFromDocs(message, documents) {
     return "You can book via this assistant or the front desk — we confirm within one business day.";
   if (/cancel/i.test(q)) return "Please cancel at least 24 hours ahead to avoid a late fee.";
   if (/virtual|zoom|online/i.test(q))
-    return "Virtual visits are available — choose Virtual as the location when booking.";
+    return "Virtual visits are available — choose visit type Virtual when booking (no room needed).";
+  if (/weekend|saturday|sunday/i.test(q))
+    return "We are closed weekends. Appointments are only booked Monday–Friday.";
   return "Thanks for your message. Ask about hours, booking, cancellation, or virtual visits.";
 }

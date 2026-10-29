@@ -1,13 +1,23 @@
 import { useMemo, useState } from "react";
+import ConfirmModal from "../components/ConfirmModal";
 import { DAY_NAMES } from "../data/seed";
 import { useStore } from "../hooks/useStore";
 
+function visitLabel(ev) {
+  if (ev.visitType === "virtual") return "Virtual";
+  return ev.room || "In person";
+}
+
 export default function CalendarPage() {
-  const { events, clients, slots, addEvent, removeEvent, toggleSlot } = useStore();
+  const { events, clients, slots, addEvent, cancelEvent, setEventStatus, toggleSlot } =
+    useStore();
   const [title, setTitle] = useState("");
   const [clientId, setClientId] = useState(clients.find((c) => c.active)?.id || "");
   const [when, setWhen] = useState("");
-  const [location, setLocation] = useState("Room A");
+  const [visitType, setVisitType] = useState("in_person");
+  const [room, setRoom] = useState("Room A");
+  const [formError, setFormError] = useState("");
+  const [cancelId, setCancelId] = useState(null);
 
   const week = useMemo(() => {
     const start = new Date();
@@ -34,20 +44,30 @@ export default function CalendarPage() {
 
   const onCreate = (e) => {
     e.preventDefault();
+    setFormError("");
     if (!title.trim() || !when) return;
     const start = new Date(when);
+    const dow = start.getDay();
+    if (dow === 0 || dow === 6) {
+      setFormError("Clinic is closed weekends (Mon–Fri only).");
+      return;
+    }
     const end = new Date(start.getTime() + 45 * 60 * 1000);
     addEvent({
       title: title.trim(),
       clientId: clientId || null,
       start: start.toISOString(),
       end: end.toISOString(),
-      location,
+      visitType,
+      room: visitType === "virtual" ? "" : room.trim(),
+      status: "confirmed",
       description: "",
     });
     setTitle("");
     setWhen("");
   };
+
+  const pendingCancel = events.find((e) => e.id === cancelId);
 
   return (
     <div>
@@ -55,7 +75,7 @@ export default function CalendarPage() {
         <div>
           <h2>Calendar</h2>
           <p className="muted" style={{ margin: "0.35rem 0 0" }}>
-            This week’s appointments — create and manage visits
+            Weekday visits only · cancel keeps history (does not hard-delete)
           </p>
         </div>
       </div>
@@ -81,7 +101,7 @@ export default function CalendarPage() {
             </select>
           </label>
           <label>
-            Start
+            Start (Mon–Fri)
             <input
               type="datetime-local"
               value={when}
@@ -90,9 +110,19 @@ export default function CalendarPage() {
             />
           </label>
           <label>
-            Location
-            <input value={location} onChange={(e) => setLocation(e.target.value)} />
+            Visit type
+            <select value={visitType} onChange={(e) => setVisitType(e.target.value)}>
+              <option value="in_person">In person</option>
+              <option value="virtual">Virtual</option>
+            </select>
           </label>
+          {visitType === "in_person" ? (
+            <label>
+              Room
+              <input value={room} onChange={(e) => setRoom(e.target.value)} placeholder="Room A" />
+            </label>
+          ) : null}
+          {formError ? <p className="error">{formError}</p> : null}
           <button className="btn btn-primary" type="submit">
             Save appointment
           </button>
@@ -100,7 +130,7 @@ export default function CalendarPage() {
         <div className="panel">
           <h3 style={{ marginTop: 0 }}>Weekly availability</h3>
           <p className="muted" style={{ marginTop: 0 }}>
-            Toggle slots open or closed for booking.
+            Mon–Fri open hours — toggle slots for booking.
           </p>
           <ul className="stack-list">
             {slots.map((s) => (
@@ -126,39 +156,86 @@ export default function CalendarPage() {
       </div>
 
       <div className="grid-3">
-        {week.map((d) => (
-          <div key={d.toISOString()} className="cal-day">
-            <strong>
-              {d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}
-            </strong>
-            {eventsByDay(d).length === 0 ? (
-              <p className="muted" style={{ fontSize: "0.8rem", margin: 0 }}>
-                Free
-              </p>
-            ) : (
-              eventsByDay(d).map((ev) => (
-                <div key={ev.id} className="cal-event">
-                  {new Date(ev.start).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}{" "}
-                  · {ev.title}
+        {week.map((d) => {
+          const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+          const dayEvents = eventsByDay(d);
+          return (
+            <div key={d.toISOString()} className={`cal-day${isWeekend ? " is-weekend" : ""}`}>
+              <strong>
+                {d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}
+              </strong>
+              {isWeekend ? (
+                <p className="muted" style={{ fontSize: "0.8rem", margin: 0 }}>
+                  Closed
+                </p>
+              ) : null}
+              {!isWeekend && dayEvents.length === 0 ? (
+                <p className="muted" style={{ fontSize: "0.8rem", margin: 0 }}>
+                  Free
+                </p>
+              ) : null}
+              {dayEvents.map((ev) => (
+                <div
+                  key={ev.id}
+                  className={`cal-event${ev.status === "cancelled" ? " is-cancelled" : ""}`}
+                >
                   <div>
-                    <button
-                      type="button"
-                      className="btn btn-danger"
-                      style={{ marginTop: 6, padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
-                      onClick={() => removeEvent(ev.id)}
-                    >
-                      Remove
-                    </button>
+                    {new Date(ev.start).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}{" "}
+                    · {ev.title}
                   </div>
+                  <div className="cal-event-meta">
+                    <span className={`chip chip-status-${ev.status || "confirmed"}`}>
+                      {(ev.status || "confirmed").replace("_", " ")}
+                    </span>
+                    <span className="chip">{visitLabel(ev)}</span>
+                  </div>
+                  {ev.status !== "cancelled" && ev.status !== "completed" ? (
+                    <div className="row-actions" style={{ marginTop: 6 }}>
+                      <button
+                        type="button"
+                        className="btn btn-ghost"
+                        style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
+                        onClick={() => setEventStatus(ev.id, "completed")}
+                      >
+                        Complete
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        style={{ padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
+                        onClick={() => setCancelId(ev.id)}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
-              ))
-            )}
-          </div>
-        ))}
+              ))}
+            </div>
+          );
+        })}
       </div>
+
+      <ConfirmModal
+        open={Boolean(cancelId)}
+        title="Cancel appointment?"
+        message={
+          pendingCancel
+            ? `"${pendingCancel.title}" will stay on the calendar marked as Cancelled.`
+            : "This visit will stay on the calendar marked as Cancelled."
+        }
+        confirmLabel="Cancel appointment"
+        cancelLabel="Keep appointment"
+        danger
+        onCancel={() => setCancelId(null)}
+        onConfirm={() => {
+          if (cancelId) cancelEvent(cancelId);
+          setCancelId(null);
+        }}
+      />
     </div>
   );
 }
