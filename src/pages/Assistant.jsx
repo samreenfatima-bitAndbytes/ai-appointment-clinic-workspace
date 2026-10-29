@@ -1,9 +1,12 @@
 import { useRef, useState } from "react";
 import { replyFromDocs } from "../data/seed";
+import { useAuth } from "../hooks/useAuth";
 import { useStore } from "../hooks/useStore";
 
 export default function Assistant() {
+  const { user } = useAuth();
   const { documents, addDocument, removeDocument } = useStore();
+  const readOnly = Boolean(user?.isAdmin);
   const fileRef = useRef(null);
   const [messages, setMessages] = useState([
     { role: "bot", text: "Hi! Ask about clinic hours, booking, or cancellations." },
@@ -28,7 +31,7 @@ export default function Assistant() {
 
   const onFile = async (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || readOnly) return;
     addDocument({ filename: file.name, content: await file.text() });
     e.target.value = "";
   };
@@ -37,19 +40,25 @@ export default function Assistant() {
     <div>
       <div className="section-head">
         <div>
-          <h2>Assistant</h2>
+          <h2>{readOnly ? "Clinic assistant" : "Assistant"}</h2>
           <p className="muted" style={{ margin: "0.35rem 0 0" }}>
-            FAQ chat from clinic documents (simulated AI)
+            {readOnly
+              ? "Preview FAQ chat — document uploads are Business-only"
+              : "FAQ chat from clinic documents (simulated AI)"}
           </p>
         </div>
-        <button
-          type="button"
-          className="btn btn-primary"
-          onClick={() => fileRef.current?.click()}
-        >
-          Upload .txt
-        </button>
-        <input ref={fileRef} type="file" accept=".txt,text/plain" hidden onChange={onFile} />
+        {!readOnly ? (
+          <>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={() => fileRef.current?.click()}
+            >
+              Upload .txt
+            </button>
+            <input ref={fileRef} type="file" accept=".txt,text/plain" hidden onChange={onFile} />
+          </>
+        ) : null}
       </div>
 
       <div className="grid-2">
@@ -95,13 +104,15 @@ export default function Assistant() {
                   <strong>{d.filename}</strong>
                   <p>{String(d.content).slice(0, 90)}…</p>
                 </div>
-                <button
-                  type="button"
-                  className="btn btn-danger"
-                  onClick={() => removeDocument(d.id)}
-                >
-                  Remove
-                </button>
+                {!readOnly ? (
+                  <button
+                    type="button"
+                    className="btn btn-danger"
+                    onClick={() => removeDocument(d.id)}
+                  >
+                    Remove
+                  </button>
+                ) : null}
               </li>
             ))}
           </ul>

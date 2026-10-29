@@ -1,10 +1,13 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useStore } from "../hooks/useStore";
 
 export default function Dashboard() {
   const { user } = useAuth();
   const { clients, events, slots, documents } = useStore();
+
+  if (user?.isAdmin) return <Navigate to="/app/admin" replace />;
+
   const activeClients = clients.filter((c) => c.active);
   const upcoming = [...events]
     .filter((e) => new Date(e.start) >= new Date())
@@ -15,9 +18,9 @@ export default function Dashboard() {
     <div>
       <div className="section-head">
         <div>
-          <h2>Dashboard</h2>
+          <h2>Clinic dashboard</h2>
           <p className="muted" style={{ margin: "0.35rem 0 0" }}>
-            {user.businessName} · {user.fullName}
+            {user.businessName} · Business workspace
           </p>
         </div>
         <Link className="btn btn-primary" to="/app/calendar">
@@ -68,7 +71,7 @@ export default function Dashboard() {
           )}
         </div>
         <div className="panel">
-          <h3 style={{ marginTop: 0 }}>Quick links</h3>
+          <h3 style={{ marginTop: 0 }}>Run your clinic</h3>
           <p className="muted">{documents.length} knowledge document(s) for the assistant.</p>
           <div style={{ display: "grid", gap: "0.5rem" }}>
             <Link className="btn btn-ghost" to="/app/clients">

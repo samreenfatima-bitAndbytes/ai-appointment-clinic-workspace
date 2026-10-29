@@ -14,10 +14,10 @@ Open http://localhost:2100
 
 ## Demo logins
 
-| Role     | Email                      | Password     |
-|----------|----------------------------|--------------|
-| Business | `owner@clinic.example`     | `DemoPass1!` |
-| Admin    | `admin@appointment.example`| `DemoPass1!` |
+| Role     | Email                       | Password     | Focus |
+|----------|-----------------------------|--------------|--------|
+| Business | `owner@clinic.example`      | `DemoPass1!` | Clinic dashboard — create appointments, clients, FAQ docs |
+| Admin    | `admin@appointment.example` | `DemoPass1!` | Platform overview — seats & read-only clinic inspect |
 
 ## Vercel
 

@@ -11,11 +11,16 @@ import Clients from "./pages/Clients";
 import Assistant from "./pages/Assistant";
 import Admin from "./pages/Admin";
 
-function RequireAuth({ children, adminOnly = false }) {
+function RequireAuth({ children }) {
   const { user } = useAuth();
   const loc = useLocation();
   if (!user) return <Navigate to="/login" replace state={{ from: loc }} />;
-  if (adminOnly && !user.isAdmin) return <Navigate to="/app" replace />;
+  return children;
+}
+
+function RequireAdmin({ children }) {
+  const { user } = useAuth();
+  if (!user?.isAdmin) return <Navigate to="/app" replace />;
   return children;
 }
 
@@ -42,9 +47,9 @@ export default function App() {
           <Route
             path="admin"
             element={
-              <RequireAuth adminOnly>
+              <RequireAdmin>
                 <Admin />
-              </RequireAuth>
+              </RequireAdmin>
             }
           />
         </Route>

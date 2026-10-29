@@ -28,7 +28,10 @@ export default function Login() {
   const [password, setPassword] = useState(ACCOUNTS[0].password);
   const [error, setError] = useState("");
 
-  if (user) return <Navigate to={loc.state?.from?.pathname || "/app"} replace />;
+  if (user) {
+    const home = user.isAdmin ? "/app/admin" : "/app";
+    return <Navigate to={loc.state?.from?.pathname || home} replace />;
+  }
 
   const pick = (id) => {
     const next = ACCOUNTS.find((a) => a.id === id);
@@ -45,7 +48,8 @@ export default function Login() {
       setError(res.error);
       return;
     }
-    nav(loc.state?.from?.pathname || "/app");
+    const home = res.user?.isAdmin ? "/app/admin" : "/app";
+    nav(loc.state?.from?.pathname || home);
   };
 
   return (
@@ -72,7 +76,9 @@ export default function Login() {
             <img className="brand-logo-lg" src="/logo.png" alt="AI Appointment" />
           </Link>
           <p className="muted">
-            Sign in to manage appointments, clients, and the clinic assistant.
+            {account === "admin"
+              ? "Admin = platform overview & read-only clinic inspect."
+              : "Business = run Harbor Wellness Clinic (calendar, clients, assistant)."}
           </p>
           <div className="login-tabs" role="tablist">
             {ACCOUNTS.map((a) => (

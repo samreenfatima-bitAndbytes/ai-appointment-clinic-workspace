@@ -5,8 +5,9 @@ export const DEMO_USERS = [
     id: "u-admin",
     email: "admin@appointment.example",
     password: DEMO_PASSWORD,
-    fullName: "Admin",
+    fullName: "Alex Rivera",
     isAdmin: true,
+    businessName: "AI Appointment Platform",
   },
   {
     id: "u-owner",

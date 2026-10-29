@@ -3,6 +3,32 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useStore } from "../hooks/useStore";
 
+function NavLinks() {
+  const { user } = useAuth();
+  if (user?.isAdmin) {
+    return (
+      <>
+        <NavLink to="/app/admin" end>
+          Overview
+        </NavLink>
+        <NavLink to="/app/calendar">Clinic calendar</NavLink>
+        <NavLink to="/app/clients">Clinic clients</NavLink>
+        <NavLink to="/app/assistant">Clinic assistant</NavLink>
+      </>
+    );
+  }
+  return (
+    <>
+      <NavLink to="/app" end>
+        Dashboard
+      </NavLink>
+      <NavLink to="/app/calendar">Calendar</NavLink>
+      <NavLink to="/app/clients">Clients</NavLink>
+      <NavLink to="/app/assistant">Assistant</NavLink>
+    </>
+  );
+}
+
 export default function Layout() {
   const { user, logout } = useAuth();
   const { resetDemo } = useStore();
@@ -24,27 +50,26 @@ export default function Layout() {
     nav("/login");
   };
 
-  const links = (
-    <>
-      <NavLink to="/app" end>
-        Dashboard
-      </NavLink>
-      <NavLink to="/app/calendar">Calendar</NavLink>
-      <NavLink to="/app/clients">Clients</NavLink>
-      <NavLink to="/app/assistant">Assistant</NavLink>
-      {user?.isAdmin ? <NavLink to="/app/admin">Admin</NavLink> : null}
-    </>
-  );
-
   return (
     <div className="app-shell">
       <header className="topbar">
-        <NavLink to="/app" className="brand" aria-label="AI Appointment">
+        <NavLink
+          to={user?.isAdmin ? "/app/admin" : "/app"}
+          className="brand"
+          aria-label="AI Appointment"
+        >
           <img className="brand-logo" src="/logo-transparent.png" alt="AI Appointment" />
         </NavLink>
-        <nav className="nav-links nav-links-desktop">{links}</nav>
+        <nav className="nav-links nav-links-desktop">
+          <NavLinks />
+        </nav>
         <div className="topbar-actions topbar-actions-desktop">
-          <span className="user-chip">{user?.fullName}</span>
+          <span className="user-chip">
+            {user?.fullName}
+            <small style={{ display: "block", fontWeight: 600, opacity: 0.7 }}>
+              {user?.isAdmin ? "Platform admin" : "Business"}
+            </small>
+          </span>
           <button type="button" className="btn btn-ghost" onClick={resetDemo}>
             Reset demo
           </button>
@@ -55,7 +80,7 @@ export default function Layout() {
         <button
           type="button"
           className={`menu-toggle${menuOpen ? " is-open" : ""}`}
-          aria-label="Menu"
+          aria-label={menuOpen ? "Close menu" : "Open menu"}
           aria-expanded={menuOpen}
           onClick={() => setMenuOpen((v) => !v)}
         >
@@ -71,8 +96,13 @@ export default function Layout() {
       <aside className={`mobile-drawer${menuOpen ? " is-open" : ""}`}>
         <div className="user-chip" style={{ marginBottom: "0.75rem" }}>
           {user?.fullName}
+          <small style={{ display: "block", fontWeight: 600, opacity: 0.7 }}>
+            {user?.isAdmin ? "Platform admin" : "Business"}
+          </small>
         </div>
-        <nav className="mobile-nav-links">{links}</nav>
+        <nav className="mobile-nav-links">
+          <NavLinks />
+        </nav>
         <div className="mobile-drawer-actions">
           <button
             type="button"
