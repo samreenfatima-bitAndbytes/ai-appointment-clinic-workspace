@@ -13,6 +13,7 @@ export default function Dashboard() {
     .filter((e) => new Date(e.start) >= new Date())
     .sort((a, b) => new Date(a.start) - new Date(b.start))
     .slice(0, 4);
+  const openSlots = slots.filter((s) => s.available).length;
 
   return (
     <div>
@@ -20,12 +21,17 @@ export default function Dashboard() {
         <div>
           <h2>Clinic dashboard</h2>
           <p className="muted" style={{ margin: "0.35rem 0 0" }}>
-            {user.businessName} · Business workspace
+            {user.businessName} · create appointments, manage clients, train the assistant
           </p>
         </div>
-        <Link className="btn btn-primary" to="/app/calendar">
-          Open calendar
-        </Link>
+        <div className="row-actions">
+          <Link className="btn btn-ghost" to="/app/clients">
+            Add client
+          </Link>
+          <Link className="btn btn-primary" to="/app/calendar">
+            New appointment
+          </Link>
+        </div>
       </div>
 
       <div className="grid-3" style={{ marginBottom: "1.5rem" }}>
@@ -38,16 +44,19 @@ export default function Dashboard() {
           <span>Active clients</span>
         </div>
         <div className="stat">
-          <strong>{slots.filter((s) => s.available).length}</strong>
+          <strong>{openSlots}</strong>
           <span>Open weekly slots</span>
         </div>
       </div>
 
       <div className="grid-2">
         <div className="panel">
-          <h3 style={{ marginTop: 0 }}>Next up</h3>
+          <div className="panel-head-row">
+            <h3 style={{ margin: 0 }}>Next up</h3>
+            <Link to="/app/calendar">Edit schedule</Link>
+          </div>
           {upcoming.length === 0 ? (
-            <p className="muted">No upcoming appointments.</p>
+            <p className="muted">No upcoming appointments. Book one from Calendar.</p>
           ) : (
             <ul className="stack-list">
               {upcoming.map((e) => (
@@ -65,20 +74,32 @@ export default function Dashboard() {
                       · {e.location || "—"}
                     </p>
                   </div>
+                  <Link
+                    className="btn btn-ghost"
+                    style={{ padding: "0.35rem 0.65rem", fontSize: "0.8rem" }}
+                    to="/app/calendar"
+                  >
+                    Manage
+                  </Link>
                 </li>
               ))}
             </ul>
           )}
         </div>
         <div className="panel">
-          <h3 style={{ marginTop: 0 }}>Run your clinic</h3>
-          <p className="muted">{documents.length} knowledge document(s) for the assistant.</p>
+          <h3 style={{ marginTop: 0 }}>Actions</h3>
           <div style={{ display: "grid", gap: "0.5rem" }}>
+            <Link className="btn btn-primary" to="/app/calendar">
+              Book / remove appointments
+            </Link>
+            <Link className="btn btn-ghost" to="/app/calendar">
+              Open or close weekly slots
+            </Link>
             <Link className="btn btn-ghost" to="/app/clients">
-              Manage clients
+              Add or archive clients
             </Link>
             <Link className="btn btn-ghost" to="/app/assistant">
-              Try clinic assistant
+              Chat + upload FAQ docs ({documents.length})
             </Link>
           </div>
         </div>

@@ -16,6 +16,62 @@ export const DEMO_USERS = [
     fullName: "Dr. Maya Chen",
     isAdmin: false,
     businessName: "Harbor Wellness Clinic",
+    clinicId: "clinic-harbor",
+  },
+  {
+    id: "u-ridge",
+    email: "ops@ridgeview.example",
+    password: DEMO_PASSWORD,
+    fullName: "Jordan Blake",
+    isAdmin: false,
+    businessName: "Ridgeview Dental",
+    clinicId: "clinic-ridge",
+  },
+  {
+    id: "u-north",
+    email: "front@northline.example",
+    password: DEMO_PASSWORD,
+    fullName: "Sam Ortiz",
+    isAdmin: false,
+    businessName: "Northline Physio",
+    clinicId: "clinic-north",
+  },
+];
+
+/** Platform catalog for Admin (multi-tenant overview). Harbor is the live Business demo workspace. */
+export const SEED_CLINICS = [
+  {
+    id: "clinic-harbor",
+    name: "Harbor Wellness Clinic",
+    owner: "Dr. Maya Chen",
+    plan: "Growth",
+    status: "active",
+    clients: 3,
+    appointments: 3,
+    docs: 1,
+    demoLogin: true,
+  },
+  {
+    id: "clinic-ridge",
+    name: "Ridgeview Dental",
+    owner: "Jordan Blake",
+    plan: "Starter",
+    status: "active",
+    clients: 28,
+    appointments: 41,
+    docs: 4,
+    demoLogin: false,
+  },
+  {
+    id: "clinic-north",
+    name: "Northline Physio",
+    owner: "Sam Ortiz",
+    plan: "Growth",
+    status: "trial",
+    clients: 12,
+    appointments: 9,
+    docs: 2,
+    demoLogin: false,
   },
 ];
 

@@ -16,8 +16,8 @@ Open http://localhost:2100
 
 | Role     | Email                       | Password     | Focus |
 |----------|-----------------------------|--------------|--------|
-| Business | `owner@clinic.example`      | `DemoPass1!` | Clinic dashboard — create appointments, clients, FAQ docs |
-| Admin    | `admin@appointment.example` | `DemoPass1!` | Platform overview — seats & read-only clinic inspect |
+| Business | `owner@clinic.example`      | `DemoPass1!` | Book/remove appointments, toggle slots, add/archive clients, FAQ upload + chat |
+| Admin    | `admin@appointment.example` | `DemoPass1!` | Add clinics, change plan/status, invite/disable business owners |
 
 ## Vercel
 

@@ -1,12 +1,9 @@
 import { useMemo, useState } from "react";
 import { DAY_NAMES } from "../data/seed";
-import { useAuth } from "../hooks/useAuth";
 import { useStore } from "../hooks/useStore";
 
 export default function CalendarPage() {
-  const { user } = useAuth();
-  const { events, clients, slots, addEvent, removeEvent } = useStore();
-  const readOnly = Boolean(user?.isAdmin);
+  const { events, clients, slots, addEvent, removeEvent, toggleSlot } = useStore();
   const [title, setTitle] = useState("");
   const [clientId, setClientId] = useState(clients.find((c) => c.active)?.id || "");
   const [when, setWhen] = useState("");
@@ -37,7 +34,7 @@ export default function CalendarPage() {
 
   const onCreate = (e) => {
     e.preventDefault();
-    if (readOnly || !title.trim() || !when) return;
+    if (!title.trim() || !when) return;
     const start = new Date(when);
     const end = new Date(start.getTime() + 45 * 60 * 1000);
     addEvent({
@@ -56,24 +53,14 @@ export default function CalendarPage() {
     <div>
       <div className="section-head">
         <div>
-          <h2>{readOnly ? "Clinic calendar" : "Calendar"}</h2>
+          <h2>Calendar</h2>
           <p className="muted" style={{ margin: "0.35rem 0 0" }}>
-            {readOnly
-              ? "Read-only platform view of Harbor Wellness Clinic"
-              : "This week’s appointments — create and manage visits"}
+            This week’s appointments — create and manage visits
           </p>
         </div>
       </div>
 
       <div className="grid-2" style={{ marginBottom: "1rem" }}>
-        {readOnly ? (
-          <div className="panel">
-            <h3 style={{ marginTop: 0 }}>Platform note</h3>
-            <p className="muted" style={{ margin: 0 }}>
-              Admins can review the schedule. Sign in as Business to create or remove appointments.
-            </p>
-          </div>
-        ) : (
         <form className="panel" onSubmit={onCreate}>
           <h3 style={{ marginTop: 0 }}>New appointment</h3>
           <label>
@@ -110,9 +97,11 @@ export default function CalendarPage() {
             Save appointment
           </button>
         </form>
-        )}
         <div className="panel">
           <h3 style={{ marginTop: 0 }}>Weekly availability</h3>
+          <p className="muted" style={{ marginTop: 0 }}>
+            Toggle slots open or closed for booking.
+          </p>
           <ul className="stack-list">
             {slots.map((s) => (
               <li key={s.id} className="stack-item">
@@ -122,6 +111,14 @@ export default function CalendarPage() {
                     {s.start}–{s.end} · {s.available ? "Open" : "Closed"}
                   </p>
                 </div>
+                <button
+                  type="button"
+                  className={s.available ? "btn btn-ghost" : "btn btn-primary"}
+                  style={{ padding: "0.35rem 0.65rem", fontSize: "0.8rem" }}
+                  onClick={() => toggleSlot(s.id)}
+                >
+                  {s.available ? "Close" : "Open"}
+                </button>
               </li>
             ))}
           </ul>
@@ -146,18 +143,16 @@ export default function CalendarPage() {
                     minute: "2-digit",
                   })}{" "}
                   · {ev.title}
-                  {!readOnly ? (
-                    <div>
-                      <button
-                        type="button"
-                        className="btn btn-danger"
-                        style={{ marginTop: 6, padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
-                        onClick={() => removeEvent(ev.id)}
-                      >
-                        Remove
-                      </button>
-                    </div>
-                  ) : null}
+                  <div>
+                    <button
+                      type="button"
+                      className="btn btn-danger"
+                      style={{ marginTop: 6, padding: "0.25rem 0.5rem", fontSize: "0.75rem" }}
+                      onClick={() => removeEvent(ev.id)}
+                    >
+                      Remove
+                    </button>
+                  </div>
                 </div>
               ))
             )}

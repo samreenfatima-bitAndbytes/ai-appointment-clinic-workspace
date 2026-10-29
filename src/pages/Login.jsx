@@ -77,8 +77,8 @@ export default function Login() {
           </Link>
           <p className="muted">
             {account === "admin"
-              ? "Admin = platform overview & read-only clinic inspect."
-              : "Business = run Harbor Wellness Clinic (calendar, clients, assistant)."}
+              ? "Admin = platform: all clinics, seats, and usage (not clinic ops)."
+              : "Business = Harbor Wellness Clinic — calendar, clients, assistant."}
           </p>
           <div className="login-tabs" role="tablist">
             {ACCOUNTS.map((a) => (

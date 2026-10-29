@@ -10,6 +10,8 @@ import CalendarPage from "./pages/CalendarPage";
 import Clients from "./pages/Clients";
 import Assistant from "./pages/Assistant";
 import Admin from "./pages/Admin";
+import AdminAccounts from "./pages/AdminAccounts";
+import AdminClinics from "./pages/AdminClinics";
 
 function RequireAuth({ children }) {
   const { user } = useAuth();
@@ -21,6 +23,12 @@ function RequireAuth({ children }) {
 function RequireAdmin({ children }) {
   const { user } = useAuth();
   if (!user?.isAdmin) return <Navigate to="/app" replace />;
+  return children;
+}
+
+function RequireBusiness({ children }) {
+  const { user } = useAuth();
+  if (user?.isAdmin) return <Navigate to="/app/admin" replace />;
   return children;
 }
 
@@ -41,14 +49,51 @@ export default function App() {
           }
         >
           <Route index element={<Dashboard />} />
-          <Route path="calendar" element={<CalendarPage />} />
-          <Route path="clients" element={<Clients />} />
-          <Route path="assistant" element={<Assistant />} />
+          <Route
+            path="calendar"
+            element={
+              <RequireBusiness>
+                <CalendarPage />
+              </RequireBusiness>
+            }
+          />
+          <Route
+            path="clients"
+            element={
+              <RequireBusiness>
+                <Clients />
+              </RequireBusiness>
+            }
+          />
+          <Route
+            path="assistant"
+            element={
+              <RequireBusiness>
+                <Assistant />
+              </RequireBusiness>
+            }
+          />
           <Route
             path="admin"
             element={
               <RequireAdmin>
                 <Admin />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="admin/clinics"
+            element={
+              <RequireAdmin>
+                <AdminClinics />
+              </RequireAdmin>
+            }
+          />
+          <Route
+            path="admin/accounts"
+            element={
+              <RequireAdmin>
+                <AdminAccounts />
               </RequireAdmin>
             }
           />

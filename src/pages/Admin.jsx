@@ -3,11 +3,12 @@ import { DEMO_USERS } from "../data/seed";
 import { useStore } from "../hooks/useStore";
 
 export default function Admin() {
-  const { clients, events, documents, slots } = useStore();
-  const activeClients = clients.filter((c) => c.active);
-  const upcoming = events.filter((e) => new Date(e.start) >= new Date());
-  const businessUsers = DEMO_USERS.filter((u) => !u.isAdmin);
-  const admins = DEMO_USERS.filter((u) => u.isAdmin);
+  const { clinics, accounts } = useStore();
+  const activeClinics = clinics.filter((c) => c.status === "active").length;
+  const totalClients = clinics.reduce((n, c) => n + c.clients, 0);
+  const totalAppts = clinics.reduce((n, c) => n + c.appointments, 0);
+  const trials = clinics.filter((c) => c.status === "trial").length;
+  const suspended = clinics.filter((c) => c.status === "suspended").length;
 
   return (
     <div>
@@ -15,92 +16,80 @@ export default function Admin() {
         <div>
           <h2>Platform overview</h2>
           <p className="muted" style={{ margin: "0.35rem 0 0" }}>
-            Admin — monitor seeded clinics and seats. Clinic day-to-day ops belong to Business
-            users.
+            Manage clinics and seats across the platform.
           </p>
+        </div>
+        <div className="row-actions">
+          <Link className="btn btn-ghost" to="/app/admin/clinics">
+            Manage clinics
+          </Link>
+          <Link className="btn btn-primary" to="/app/admin/accounts">
+            Invite business
+          </Link>
         </div>
       </div>
 
       <div className="grid-4" style={{ marginBottom: "1.5rem" }}>
         <div className="stat">
-          <strong>{DEMO_USERS.length}</strong>
-          <span>Accounts</span>
+          <strong>{clinics.length}</strong>
+          <span>Clinics</span>
         </div>
         <div className="stat">
-          <strong>{businessUsers.length}</strong>
-          <span>Business workspaces</span>
+          <strong>{activeClinics}</strong>
+          <span>Active</span>
         </div>
         <div className="stat">
-          <strong>{upcoming.length}</strong>
-          <span>Upcoming appointments</span>
+          <strong>{totalClients}</strong>
+          <span>Clients (all)</span>
         </div>
         <div className="stat">
-          <strong>{documents.length}</strong>
-          <span>Knowledge docs</span>
+          <strong>{totalAppts}</strong>
+          <span>Appointments (all)</span>
         </div>
       </div>
 
-      <div className="grid-2" style={{ marginBottom: "1rem" }}>
+      <div className="grid-2">
         <div className="panel">
-          <h3 style={{ marginTop: 0 }}>Platform seats</h3>
+          <div className="panel-head-row">
+            <h3 style={{ margin: 0 }}>Needs attention</h3>
+            <Link to="/app/admin/clinics">Open</Link>
+          </div>
           <ul className="stack-list">
-            {admins.map((u) => (
-              <li key={u.id} className="stack-item">
-                <div className="stack-item-body">
-                  <strong>{u.fullName}</strong>
-                  <p>{u.email} · Platform admin</p>
-                </div>
-                <span className="chip chip-admin">Admin</span>
-              </li>
-            ))}
-            {businessUsers.map((u) => (
-              <li key={u.id} className="stack-item">
-                <div className="stack-item-body">
-                  <strong>{u.fullName}</strong>
-                  <p>
-                    {u.email} · {u.businessName || "Business"}
-                  </p>
-                </div>
-                <span className="chip">Business</span>
-              </li>
-            ))}
+            <li className="stack-item">
+              <div className="stack-item-body">
+                <strong>{trials} on trial</strong>
+                <p>Activate or keep in trial from Clinics</p>
+              </div>
+            </li>
+            <li className="stack-item">
+              <div className="stack-item-body">
+                <strong>{suspended} suspended</strong>
+                <p>Reactivate when billing is cleared</p>
+              </div>
+            </li>
+            <li className="stack-item">
+              <div className="stack-item-body">
+                <strong>{accounts.filter((a) => !a.active).length} inactive owners</strong>
+                <p>Toggle seats on Accounts</p>
+              </div>
+            </li>
           </ul>
         </div>
         <div className="panel">
-          <h3 style={{ marginTop: 0 }}>Harbor Wellness Clinic</h3>
-          <p className="muted">Seeded business workspace (read-only for Admin).</p>
-          <dl className="detail-dl" style={{ marginTop: "1rem" }}>
-            <div>
-              <dt>Active clients</dt>
-              <dd>{activeClients.length}</dd>
-            </div>
-            <div>
-              <dt>Appointments on file</dt>
-              <dd>{events.length}</dd>
-            </div>
-            <div>
-              <dt>Open weekly slots</dt>
-              <dd>{slots.filter((s) => s.available).length}</dd>
-            </div>
-            <div>
-              <dt>FAQ documents</dt>
-              <dd>{documents.length}</dd>
-            </div>
-          </dl>
-          <div style={{ display: "grid", gap: "0.5rem", marginTop: "1rem" }}>
-            <Link className="btn btn-ghost" to="/app/calendar">
-              View clinic calendar
+          <div className="panel-head-row">
+            <h3 style={{ margin: 0 }}>Quick actions</h3>
+          </div>
+          <div style={{ display: "grid", gap: "0.5rem" }}>
+            <Link className="btn btn-primary" to="/app/admin/clinics">
+              Add clinic / change plans
             </Link>
-            <Link className="btn btn-ghost" to="/app/clients">
-              View clinic clients
-            </Link>
-            <Link className="btn btn-ghost" to="/app/assistant">
-              Preview clinic assistant
+            <Link className="btn btn-ghost" to="/app/admin/accounts">
+              Invite or disable business owners
             </Link>
           </div>
           <p className="muted" style={{ margin: "1rem 0 0", fontSize: "0.9rem" }}>
-            You can inspect clinic data. Creating or changing appointments, clients, or docs is a
-            Business action — sign in as the clinic owner to demo that flow.
+            {DEMO_USERS.filter((u) => u.isAdmin).length} platform admin · {accounts.length}{" "}
+            business seats. Clinic day-to-day ops stay on Business login.
           </p>
         </div>
       </div>

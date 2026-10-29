@@ -99,6 +99,31 @@ button, input, textarea, select { font: inherit; }
   background: #eef2f7; color: var(--muted); font-size: 0.75rem; font-weight: 700;
 }
 .chip-admin { background: #e0f2fe; color: #075985; }
+.chip-ok { background: #dcfce7; color: #166534; }
+.chip-trial { background: #ffedd5; color: #9a3412; }
+.chip-suspended { background: #fee2e2; color: #991b1b; }
+.chip-demo { background: #ede9fe; color: #5b21b6; }
+.row-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.inline-select {
+  width: auto; min-width: 7.5rem; padding: 0.35rem 0.5rem; font-size: 0.85rem;
+}
+.panel-head-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+.panel-head-row a { font-weight: 700; color: var(--brand-deep); font-size: 0.9rem; }
+.table-wrap { overflow-x: auto; margin-top: 0.75rem; }
+.data-table {
+  width: 100%; border-collapse: collapse; font-size: 0.9rem;
+}
+.data-table th, .data-table td {
+  text-align: left; padding: 0.65rem 0.5rem; border-bottom: 1px solid var(--line);
+  vertical-align: middle;
+}
+.data-table th {
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--muted); font-weight: 700;
+}
 .detail-dl { margin: 0; display: grid; gap: 0.75rem; }
 .detail-dl div { display: grid; gap: 0.15rem; }
 .detail-dl dt {

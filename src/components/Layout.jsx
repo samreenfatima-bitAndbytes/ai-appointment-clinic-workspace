@@ -11,9 +11,8 @@ function NavLinks() {
         <NavLink to="/app/admin" end>
           Overview
         </NavLink>
-        <NavLink to="/app/calendar">Clinic calendar</NavLink>
-        <NavLink to="/app/clients">Clinic clients</NavLink>
-        <NavLink to="/app/assistant">Clinic assistant</NavLink>
+        <NavLink to="/app/admin/clinics">Clinics</NavLink>
+        <NavLink to="/app/admin/accounts">Accounts</NavLink>
       </>
     );
   }
